@@ -1,0 +1,264 @@
+openapi: 3.0.3
+info:
+  title: Foundry Order Document Parser
+  version: 1.0.0
+  description: >-
+    Parses one uploaded order document through the Microsoft Foundry Responses protocol.
+    The input string is serialized ParseRequest JSON and output_text is serialized
+    OrderSuccess or ErrorResponse JSON.
+servers:
+  - url: https://REPLACE_WITH_HOSTED_AGENT_ENDPOINT
+security:
+  - oauth2: []
+paths:
+  /responses:
+    post:
+      operationId: ParseOrderDocument
+      summary: Parse one order document
+      description: >-
+        Stateless parsing only. Serialize a ParseRequest into input. The operation does not
+        create or update business records.
+      x-ms-visibility: important
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResponsesRequest"
+      responses:
+        "200":
+          description: >-
+            Foundry Responses envelope. output[0].content[0].text contains one schema-valid
+            OrderSuccess or ErrorResponse JSON object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponsesEnvelope"
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://login.microsoftonline.com/REPLACE_TENANT_ID/oauth2/v2.0/token
+          scopes:
+            REPLACE_API_APP_ID_URI/.default: Invoke the hosted document parser
+  schemas:
+    ResponsesRequest:
+      type: object
+      additionalProperties: false
+      required: [input, stream]
+      properties:
+        input:
+          type: string
+          description: Compact JSON serialization of the ParseRequest schema.
+          x-ms-summary: Serialized document request
+        stream:
+          type: boolean
+          default: false
+          enum: [false]
+          description: Must be false so one atomic JSON object is returned.
+          x-ms-summary: Stream response
+    ResponsesEnvelope:
+      type: object
+      additionalProperties: true
+      required: [id, object, status, output]
+      properties:
+        id: {type: string}
+        object: {type: string, enum: [response]}
+        status: {type: string}
+        output:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseMessage"
+    ResponseMessage:
+      type: object
+      additionalProperties: true
+      required: [type, content]
+      properties:
+        type: {type: string}
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseContent"
+    ResponseContent:
+      type: object
+      additionalProperties: true
+      required: [type, text]
+      properties:
+        type: {type: string, enum: [output_text]}
+        text:
+          type: string
+          description: Serialized OrderSuccess or ErrorResponse JSON. Never Markdown.
+          x-ms-summary: Order processing JSON
+    ParseRequest:
+      type: object
+      additionalProperties: false
+      required: [file_name, mime_type, content_base64]
+      properties:
+        file_name:
+          type: string
+          description: Original attachment name.
+          x-ms-summary: File name
+        mime_type:
+          type: string
+          description: Attachment MIME type.
+          x-ms-summary: MIME type
+        content_base64:
+          type: string
+          format: byte
+          description: Base64-encoded file bytes.
+          x-ms-summary: File content
+    Evidence:
+      type: object
+      additionalProperties: false
+      required: [source_type, text, page, sheet, cell]
+      properties:
+        source_type:
+          type: string
+          enum: [printed, handwritten, email, spreadsheet, document]
+        text:
+          type: string
+          nullable: true
+        page:
+          type: integer
+          nullable: true
+          minimum: 1
+        sheet:
+          type: string
+          nullable: true
+        cell:
+          type: string
+          nullable: true
+    OrderLine:
+      type: object
+      additionalProperties: false
+      required:
+        - line_number
+        - item_number
+        - customer_item_number
+        - description
+        - quantity
+        - uom
+        - unit_price
+        - line_total
+        - confidence
+        - evidence
+      properties:
+        line_number: {type: integer, nullable: true, minimum: 1}
+        item_number: {type: string, nullable: true}
+        customer_item_number: {type: string, nullable: true}
+        description: {type: string, nullable: true}
+        quantity: {type: number, nullable: true}
+        uom: {type: string, nullable: true}
+        unit_price: {type: number, nullable: true}
+        line_total: {type: number, nullable: true}
+        confidence: {type: number, nullable: true, minimum: 0, maximum: 1}
+        evidence:
+          type: array
+          items: {$ref: "#/components/schemas/Evidence"}
+    SourceMetadata:
+      type: object
+      additionalProperties: false
+      required:
+        - file_name
+        - mime_type
+        - sha256
+        - size_bytes
+        - page_count
+        - sheet_count
+        - contains_handwriting
+        - extracted_with
+      properties:
+        file_name: {type: string}
+        mime_type: {type: string}
+        sha256: {type: string}
+        size_bytes: {type: integer}
+        page_count: {type: integer, nullable: true}
+        sheet_count: {type: integer, nullable: true}
+        contains_handwriting: {type: boolean}
+        extracted_with: {type: string}
+    ValidationSummary:
+      type: object
+      additionalProperties: false
+      required: [is_valid, needs_review, warnings]
+      properties:
+        is_valid: {type: boolean}
+        needs_review: {type: boolean}
+        warnings:
+          type: array
+          items: {type: string}
+    OrderSuccess:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - source
+        - document_type
+        - customer_name
+        - customer_email
+        - customer_address
+        - vendor_name
+        - vendor_address
+        - bill_to_name
+        - bill_to_address
+        - ship_to_name
+        - ship_to_address
+        - order_date
+        - requested_delivery_date
+        - po_number
+        - currency
+        - payment_terms
+        - freight_terms
+        - subtotal
+        - tax
+        - freight
+        - total
+        - lines
+        - field_confidence
+        - field_evidence
+        - validation
+      properties:
+        status: {type: string, enum: [success]}
+        source: {$ref: "#/components/schemas/SourceMetadata"}
+        document_type: {type: string, nullable: true}
+        customer_name: {type: string, nullable: true}
+        customer_email: {type: string, nullable: true}
+        customer_address: {type: string, nullable: true}
+        vendor_name: {type: string, nullable: true}
+        vendor_address: {type: string, nullable: true}
+        bill_to_name: {type: string, nullable: true}
+        bill_to_address: {type: string, nullable: true}
+        ship_to_name: {type: string, nullable: true}
+        ship_to_address: {type: string, nullable: true}
+        order_date: {type: string, format: date, nullable: true}
+        requested_delivery_date: {type: string, format: date, nullable: true}
+        po_number: {type: string, nullable: true}
+        currency: {type: string, nullable: true}
+        payment_terms: {type: string, nullable: true}
+        freight_terms: {type: string, nullable: true}
+        subtotal: {type: number, nullable: true}
+        tax: {type: number, nullable: true}
+        freight: {type: number, nullable: true}
+        total: {type: number, nullable: true}
+        lines:
+          type: array
+          items: {$ref: "#/components/schemas/OrderLine"}
+        field_confidence:
+          type: object
+          additionalProperties: {type: number}
+        field_evidence:
+          type: object
+          additionalProperties:
+            type: array
+            items: {$ref: "#/components/schemas/Evidence"}
+        validation: {$ref: "#/components/schemas/ValidationSummary"}
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [status, code, message, retryable]
+      properties:
+        status: {type: string, enum: [error]}
+        code: {type: string}
+        message: {type: string}
+        retryable: {type: boolean}

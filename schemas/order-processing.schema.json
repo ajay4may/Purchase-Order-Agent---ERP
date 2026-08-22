@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/order-processing.schema.json",
+  "title": "OrderProcessingResponse",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/error"
+    }
+  ],
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_type", "text", "page", "sheet", "cell"],
+      "properties": {
+        "source_type": {
+          "enum": ["printed", "handwritten", "email", "spreadsheet", "document"]
+        },
+        "text": {"type": ["string", "null"]},
+        "page": {"type": ["integer", "null"], "minimum": 1},
+        "sheet": {"type": ["string", "null"]},
+        "cell": {"type": ["string", "null"]}
+      }
+    },
+    "line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "line_number", "item_number", "customer_item_number", "description",
+        "quantity", "uom", "unit_price", "line_total", "confidence", "evidence"
+      ],
+      "properties": {
+        "line_number": {"type": ["integer", "null"], "minimum": 1},
+        "item_number": {"type": ["string", "null"]},
+        "customer_item_number": {"type": ["string", "null"]},
+        "description": {"type": ["string", "null"]},
+        "quantity": {"type": ["number", "null"]},
+        "uom": {"type": ["string", "null"]},
+        "unit_price": {"type": ["number", "null"]},
+        "line_total": {"type": ["number", "null"]},
+        "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}}
+      }
+    },
+    "success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status", "source", "document_type", "customer_name", "customer_email",
+        "customer_address", "vendor_name", "vendor_address", "bill_to_name",
+        "bill_to_address", "ship_to_name", "ship_to_address", "order_date",
+        "requested_delivery_date", "po_number", "currency", "payment_terms",
+        "freight_terms", "subtotal", "tax", "freight", "total", "lines",
+        "field_confidence", "field_evidence", "validation"
+      ],
+      "properties": {
+        "status": {"const": "success"},
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file_name", "mime_type", "sha256", "size_bytes", "page_count",
+            "sheet_count", "contains_handwriting", "extracted_with"
+          ],
+          "properties": {
+            "file_name": {"type": "string"},
+            "mime_type": {"type": "string"},
+            "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "size_bytes": {"type": "integer", "minimum": 0},
+            "page_count": {"type": ["integer", "null"], "minimum": 1},
+            "sheet_count": {"type": ["integer", "null"], "minimum": 1},
+            "contains_handwriting": {"type": "boolean"},
+            "extracted_with": {"type": "string"}
+          }
+        },
+        "document_type": {"type": ["string", "null"]},
+        "customer_name": {"type": ["string", "null"]},
+        "customer_email": {"type": ["string", "null"]},
+        "customer_address": {"type": ["string", "null"]},
+        "vendor_name": {"type": ["string", "null"]},
+        "vendor_address": {"type": ["string", "null"]},
+        "bill_to_name": {"type": ["string", "null"]},
+        "bill_to_address": {"type": ["string", "null"]},
+        "ship_to_name": {"type": ["string", "null"]},
+        "ship_to_address": {"type": ["string", "null"]},
+        "order_date": {"type": ["string", "null"], "format": "date"},
+        "requested_delivery_date": {"type": ["string", "null"], "format": "date"},
+        "po_number": {"type": ["string", "null"]},
+        "currency": {"type": ["string", "null"]},
+        "payment_terms": {"type": ["string", "null"]},
+        "freight_terms": {"type": ["string", "null"]},
+        "subtotal": {"type": ["number", "null"]},
+        "tax": {"type": ["number", "null"]},
+        "freight": {"type": ["number", "null"]},
+        "total": {"type": ["number", "null"]},
+        "lines": {"type": "array", "items": {"$ref": "#/$defs/line"}},
+        "field_confidence": {
+          "type": "object",
+          "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}
+        },
+        "field_evidence": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {"$ref": "#/$defs/evidence"}
+          }
+        },
+        "validation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["is_valid", "needs_review", "warnings"],
+          "properties": {
+            "is_valid": {"type": "boolean"},
+            "needs_review": {"type": "boolean"},
+            "warnings": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "code", "message", "retryable"],
+      "properties": {
+        "status": {"const": "error"},
+        "code": {"type": "string"},
+        "message": {"type": "string"},
+        "retryable": {"type": "boolean"}
+      }
+    }
+  }
+}
+
