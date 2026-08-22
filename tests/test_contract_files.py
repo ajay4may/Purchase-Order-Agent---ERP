@@ -38,3 +38,9 @@ def test_connector_has_typed_binary_contract() -> None:
         operation["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
         == "#/components/schemas/ResponsesEnvelope"
     )
+    api_version = next(
+        parameter for parameter in operation["parameters"] if parameter["name"] == "api-version"
+    )
+    assert api_version["schema"]["enum"] == ["v1"]
+    oauth = connector["components"]["securitySchemes"]["oauth2"]["flows"]["authorizationCode"]
+    assert "https://ai.azure.com/.default" in oauth["scopes"]

@@ -19,6 +19,15 @@ paths:
         Stateless parsing only. Serialize a ParseRequest into input. The operation does not
         create or update business records.
       x-ms-visibility: important
+      parameters:
+        - name: api-version
+          in: query
+          required: true
+          description: Microsoft Foundry data-plane API version.
+          schema:
+            type: string
+            default: v1
+            enum: [v1]
       requestBody:
         required: true
         content:
@@ -39,10 +48,11 @@ components:
     oauth2:
       type: oauth2
       flows:
-        clientCredentials:
+        authorizationCode:
+          authorizationUrl: https://login.microsoftonline.com/REPLACE_TENANT_ID/oauth2/v2.0/authorize
           tokenUrl: https://login.microsoftonline.com/REPLACE_TENANT_ID/oauth2/v2.0/token
           scopes:
-            REPLACE_API_APP_ID_URI/.default: Invoke the hosted document parser
+            https://ai.azure.com/.default: Invoke the hosted document parser
   schemas:
     ResponsesRequest:
       type: object
