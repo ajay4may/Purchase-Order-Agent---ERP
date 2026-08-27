@@ -1,0 +1,11 @@
+.env.example
+Dockerfile
+README.md
+DEPLOYMENT.md
+azure.yaml
+pyproject.toml
+requirements.in
+requirements.lock
+app
+connector
+schemas

@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "foundry-document-parser"
+version = "1.0.0"
+description = "Microsoft Foundry hosted agent for schema-valid order document parsing."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "agent-framework-foundry>=1.0.0b260715",
+    "azure-ai-agentserver-responses==2.0.0b0",
+    "azure-ai-documentintelligence>=1.0.2",
+    "azure-identity>=1.25.1",
+    "extract-msg>=0.54.1",
+    "openpyxl>=3.1.5",
+    "pydantic>=2.11.7",
+    "python-docx>=1.2.0",
+    "xlrd>=2.0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx>=0.28.1",
+    "jsonschema>=4.25.1",
+    "mypy>=1.17.1",
+    "pip-tools>=7.5.0",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "pyyaml>=6.0.2",
+    "ruff>=0.12.9",
+    "types-openpyxl>=3.1.5.20250822",
+    "types-xlrd>=2.0.0.20240821",
+]
+
+[project.scripts]
+foundry-document-parser = "app.main:run"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+markers = ["evaluation: local-only evaluation against an external sample corpus"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["app"]
+exclude = ["tests"]
